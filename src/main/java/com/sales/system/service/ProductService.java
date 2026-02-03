@@ -25,9 +25,15 @@ public class ProductService {
     @Transactional
     public Product update(Long id, Product data) {
         Product existing = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
         existing.setName(data.getName());
         existing.setPrice(data.getPrice());
+
+        if (data.getStock() == null || data.getStock() < 0) {
+            throw new IllegalArgumentException("Stock must be zero or greater");
+        }
+
         existing.setStock(data.getStock());
         return productRepository.save(existing);
     }

@@ -5,9 +5,9 @@ import lombok.Setter;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "users")
 @Getter
 @Setter
-@Table(name = "users")
 public class User extends BaseEntity {
 
     @Column(nullable = false)
@@ -19,11 +19,14 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "cart_id")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
 
     @Embedded
     private Address address;
 
+    public void setCart(Cart cart) {
+        this.cart = cart;
+        cart.setUser(this); // 🔥 garante os dois lados
+    }
 }

@@ -22,11 +22,16 @@ public class CartItemService {
     }
 
     @Transactional
-    public CartItem update(Long id, CartItem data) {
-        CartItem existing = cartItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item não encontrado"));
-        existing.setQuantity(data.getQuantity());
-        return cartItemRepository.save(existing);
+    public CartItem updateQuantity(Long id, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantidade deve ser maior que zero");
+        }
+
+        CartItem item = cartItemRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Item não encontrado"));
+
+        item.setQuantity(quantity);
+        return cartItemRepository.save(item);
     }
 
     @Transactional

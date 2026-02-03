@@ -1,18 +1,20 @@
 package com.sales.system.service;
 
+import com.sales.system.dto.cart.CartItemResponseDTO;
+import com.sales.system.dto.cart.CartResponseDTO;
 import com.sales.system.entity.Cart;
 import com.sales.system.entity.CartItem;
 import com.sales.system.entity.Product;
 import com.sales.system.entity.User;
-import com.sales.system.repository.*;
+import com.sales.system.repository.CartItemRepository;
+import com.sales.system.repository.CartRepository;
+import com.sales.system.repository.ProductRepository;
+import com.sales.system.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
-
 
 @Service
 @Transactional(readOnly = true)
@@ -33,43 +35,58 @@ public class CartService {
         this.userRepository = userRepository;
     }
 
-    public Cart getCart(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return user.getCart();
+    public CartResponseDTO getCartResponse(Long userId) {
+        Cart cart = getCart(userId);
+        return mapToDTO(cart);
     }
 
     @Transactional
-    public Cart addItem(Long userId, Long productId, int quantity) {
+    public CartResponseDTO addItem(Long userId, Long productId, int quantity) {
+        addItemRaw(userId, productId, quantity);
+        return getCartResponse(userId);
+    }
+
+    @Transactional
+    public CartResponseDTO updateQuantity(Long userId, Long productId, int quantity) {
+        updateQuantityRaw(userId, productId, quantity);
+        return getCartResponse(userId);
+    }
+
+    @Transactional
+    public CartResponseDTO removeItem(Long userId, Long productId) {
+        updateQuantityRaw(userId, productId, 0);
+        return getCartResponse(userId);
+    }
+
+    private void addItemRaw(Long userId, Long productId, int quantity) {
         Cart cart = getCart(userId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
-        Optional<CartItem> existing = cart.getItems().stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
-                .findFirst();
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst().orElse(null);
 
-        CartItem item;
-        if (existing.isPresent()) {
-            item = existing.get();
-            item.setQuantity(item.getQuantity() + quantity);
-        } else {
+        if (item == null) {
             item = new CartItem();
             item.setCart(cart);
             item.setProduct(product);
             item.setQuantity(quantity);
             cart.getItems().add(item);
+        } else {
+            item.setQuantity(item.getQuantity() + quantity);
         }
-        return cartRepository.save(cart);
+
+        cartRepository.save(cart);
     }
 
-    @Transactional
-    public Cart updateQuantity(Long userId, Long productId, int quantity) {
+    private void updateQuantityRaw(Long userId, Long productId, int quantity) {
         Cart cart = getCart(userId);
+
         CartItem item = cart.getItems().stream()
                 .filter(i -> i.getProduct().getId().equals(productId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
         if (quantity <= 0) {
             cart.getItems().remove(item);
@@ -77,25 +94,53 @@ public class CartService {
         } else {
             item.setQuantity(quantity);
         }
-        return cartRepository.save(cart);
+
+        cartRepository.save(cart);
     }
 
-    @Transactional
-    public Cart removeItem(Long userId, Long productId) {
-        return updateQuantity(userId, productId, 0);
+    private Cart getCart(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getCart() == null) {
+            throw new IllegalStateException("Cart not initialized for user");
+        }
+        return user.getCart();
+    }
+
+    private CartResponseDTO mapToDTO(Cart cart) {
+        CartResponseDTO dto = new CartResponseDTO();
+        dto.setCartId(cart.getId());
+
+        List<CartItemResponseDTO> items = cart.getItems().stream().map(item -> {
+            CartItemResponseDTO itemDto = new CartItemResponseDTO();
+            itemDto.setItemId(item.getId());
+            itemDto.setProductId(item.getProduct().getId());
+            itemDto.setProductName(item.getProduct().getName());
+            itemDto.setUnitPrice(item.getProduct().getPrice());
+            itemDto.setQuantity(item.getQuantity());
+            itemDto.setSubtotal(item.getProduct().getPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity())));
+            return itemDto;
+        }).toList();
+
+        dto.setItems(items);
+        dto.setTotal(items.stream()
+                .map(CartItemResponseDTO::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        return dto;
     }
 
     public BigDecimal getTotal(Long userId) {
-        Cart cart = getCart(userId);
-        return cart.getItems().stream()
-                .map(item -> item.getProduct().getPrice()
-                        .multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        CartResponseDTO cartDTO = getCartResponse(userId);
+        return cartDTO.getTotal();
     }
 
     @Transactional
     public void clearCart(Long userId) {
         Cart cart = getCart(userId);
+        cart.getItems().forEach(cartItemRepository::delete);
         cart.getItems().clear();
         cartRepository.save(cart);
     }

@@ -1,9 +1,9 @@
 package com.sales.system.service;
 
+import com.sales.system.dto.user.UserRegisterRequestDTO;
+import com.sales.system.dto.user.UserResponseDTO;
 import com.sales.system.entity.Cart;
-import com.sales.system.entity.Roles;
 import com.sales.system.entity.User;
-import com.sales.system.repository.RolesRepository;
 import com.sales.system.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,32 +15,43 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RolesRepository rolesRepository;
 
-    public UserService(UserRepository userRepository, RolesRepository rolesRepository) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.rolesRepository = rolesRepository;
     }
 
     @Transactional
-    public User register(User user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email já cadastrado");
+    public UserResponseDTO register(UserRegisterRequestDTO dto) {
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already registered");
         }
+
+        User user = new User();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
+
         // Cria carrinho automaticamente
         Cart cart = new Cart();
         user.setCart(cart);
-        return userRepository.save(user);
+
+        User savedUser = userRepository.save(user);
+        return mapToDTO(savedUser);
     }
 
-    public User findById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    public UserResponseDTO findById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return mapToDTO(user);
     }
 
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    private UserResponseDTO mapToDTO(User user) {
+        return new UserResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getCart() != null ? user.getCart().getId() : null
+        );
     }
 
     public List<User> listAll() {
@@ -50,12 +61,5 @@ public class UserService {
     @Transactional
     public void delete(Long id) {
         userRepository.deleteById(id);
-    }
-
-    @Transactional
-    public Roles createRole(String name) {
-        Roles role = new Roles();
-        role.setName(name);
-        return rolesRepository.save(role);
     }
 }
