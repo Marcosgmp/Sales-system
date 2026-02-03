@@ -1,5 +1,7 @@
 package com.sales.system.service;
 
+import com.sales.system.dto.admin.product.AdminProductCreateDTO;
+import com.sales.system.dto.product.ProductResponseDTO;
 import com.sales.system.entity.Product;
 import com.sales.system.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -17,38 +19,70 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    //ADMIN
     @Transactional
-    public Product create(Product product) {
-        return productRepository.save(product);
-    }
+    public ProductResponseDTO create(AdminProductCreateDTO dto) {
 
-    @Transactional
-    public Product update(Long id, Product data) {
-        Product existing = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
-
-        existing.setName(data.getName());
-        existing.setPrice(data.getPrice());
-
-        if (data.getStock() == null || data.getStock() < 0) {
+        if (dto.getStock() == null || dto.getStock() < 0) {
             throw new IllegalArgumentException("Stock must be zero or greater");
         }
 
-        existing.setStock(data.getStock());
-        return productRepository.save(existing);
+        Product product = new Product();
+        product.setName(dto.getName());
+        product.setPrice(dto.getPrice());
+        product.setStock(dto.getStock());
+
+        Product saved = productRepository.save(product);
+        return mapToDTO(saved);
+    }
+
+    @Transactional
+    public ProductResponseDTO update(Long id, AdminProductCreateDTO dto) {
+
+        Product existing = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        existing.setName(dto.getName());
+        existing.setPrice(dto.getPrice());
+
+        if (dto.getStock() == null || dto.getStock() < 0) {
+            throw new IllegalArgumentException("Stock must be zero or greater");
+        }
+
+        existing.setStock(dto.getStock());
+
+        Product updated = productRepository.save(existing);
+        return mapToDTO(updated);
     }
 
     @Transactional
     public void delete(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new IllegalArgumentException("Product not found");
+        }
         productRepository.deleteById(id);
     }
 
-    public Product getById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+    public ProductResponseDTO getById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        return mapToDTO(product);
     }
 
-    public List<Product> listAll() {
-        return productRepository.findAll();
+    public List<ProductResponseDTO> listAll() {
+        return productRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    private ProductResponseDTO mapToDTO(Product product) {
+        return new ProductResponseDTO(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getStock()
+        );
     }
 }

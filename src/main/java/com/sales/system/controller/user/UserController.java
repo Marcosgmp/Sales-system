@@ -2,7 +2,6 @@ package com.sales.system.controller.user;
 
 import com.sales.system.dto.user.UserRegisterRequestDTO;
 import com.sales.system.dto.user.UserResponseDTO;
-import com.sales.system.entity.User;
 import com.sales.system.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

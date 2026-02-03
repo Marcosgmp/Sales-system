@@ -1,12 +1,14 @@
 package com.sales.system.controller.admin;
 
-import com.sales.system.entity.Product;
+import com.sales.system.dto.admin.product.AdminProductCreateDTO;
+import com.sales.system.dto.product.ProductResponseDTO;
 import com.sales.system.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/products")
+@RequestMapping("/api/admin/products")
 public class AdminProductController {
 
     private final ProductService productService;
@@ -16,16 +18,18 @@ public class AdminProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> create(@RequestBody Product product) {
-        return ResponseEntity.ok(productService.create(product));
+    public ResponseEntity<ProductResponseDTO> create(
+            @Valid @RequestBody AdminProductCreateDTO dto
+    ) {
+        return ResponseEntity.ok(productService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> update(
+    public ResponseEntity<ProductResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody Product product
+            @Valid @RequestBody AdminProductCreateDTO dto
     ) {
-        return ResponseEntity.ok(productService.update(id, product));
+        return ResponseEntity.ok(productService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

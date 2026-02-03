@@ -1,6 +1,6 @@
 package com.sales.system.controller.user;
 
-import com.sales.system.entity.Product;
+import com.sales.system.dto.product.ProductResponseDTO;
 import com.sales.system.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +18,12 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Product>> listAll() {
+    public ResponseEntity<List<ProductResponseDTO>> listAll() {
         return ResponseEntity.ok(productService.listAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getById(@PathVariable Long id) {
+    public ResponseEntity<ProductResponseDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getById(id));
     }
 }
