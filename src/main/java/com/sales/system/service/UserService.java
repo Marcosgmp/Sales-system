@@ -20,6 +20,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+
     @Transactional
     public UserResponseDTO register(UserRegisterRequestDTO dto) {
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
@@ -31,7 +32,6 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(dto.getPassword());
 
-        // Cria carrinho automaticamente
         Cart cart = new Cart();
         user.setCart(cart);
 
@@ -39,10 +39,24 @@ public class UserService {
         return mapToDTO(savedUser);
     }
 
+
     public UserResponseDTO findById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return mapToDTO(user);
+    }
+
+
+    public List<UserResponseDTO> listAllDTO() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        userRepository.deleteById(id);
     }
 
     private UserResponseDTO mapToDTO(User user) {
@@ -52,14 +66,5 @@ public class UserService {
                 user.getEmail(),
                 user.getCart() != null ? user.getCart().getId() : null
         );
-    }
-
-    public List<User> listAll() {
-        return userRepository.findAll();
-    }
-
-    @Transactional
-    public void delete(Long id) {
-        userRepository.deleteById(id);
     }
 }
