@@ -21,18 +21,32 @@ Projeto criado com foco em **boas práticas**, **arquitetura em camadas** e **or
 
 ---
 
-## 🧱 Arquitetura do Sistema
+## 🏗️ Arquitetura do Sistema
 
-O sistema segue o padrão **arquitetura em camadas**, garantindo separação de responsabilidades, manutenibilidade e escalabilidade.
+A aplicação foi desenvolvida seguindo o padrão de arquitetura em camadas,
+garantindo separação de responsabilidades, escalabilidade e facilidade de manutenção.
 
-### Camadas
+![Arquitetura do Sistema](./Docs/architecture.png)
 
-- **Controller**: expõe os endpoints REST e recebe as requisições HTTP.
-- **Service**: contém a lógica de negócio da aplicação.
-- **Repository**: acesso e persistência de dados via JPA/Hibernate.
-- **Entity**: mapeamento das tabelas do banco de dados.
-- **DTO**: objetos para entrada e saída de dados (Request / Response).
-- **Security**: autenticação, autorização e configuração de segurança com JWT.
+### Camadas da Aplicação
+
+- **Controller Layer**  
+  Responsável por expor os endpoints REST, receber requisições HTTP e retornar respostas apropriadas.
+
+- **Service Layer**  
+  Contém a lógica de negócio da aplicação, validações e regras do domínio.
+
+- **Domain Layer**  
+  Representa o núcleo do sistema, contendo as **entidades JPA** e os **DTOs** utilizados para entrada e saída de dados.
+
+- **Data Access Layer (Repository)**  
+  Camada de persistência responsável pela comunicação com o banco de dados, utilizando **Spring Data JPA / Hibernate**.
+
+- **Security Layer**  
+  Responsável pela autenticação e autorização da aplicação, utilizando **JWT** integrado ao **Spring Security**.
+
+- **Database**  
+  Banco de dados relacional (**PostgreSQL**, com possibilidade de uso de MySQL).
 
 ---
 
@@ -57,6 +71,23 @@ src/
 │       └── application.properties
 └── test/
 ```
+#### 📌 Principais Endpoints
+
+##### Autenticação
+- POST `/api/auth/register`
+- POST `/api/auth/login`
+
+##### Produtos
+- GET `/api/products`
+- GET `/api/products/{id}`
+
+##### Carrinho
+- GET `/api/cart`
+- POST `/api/cart/items`
+  
+##### Administração (ADMIN)
+- POST `/api/admin/products`
+- PUT `/api/admin/products/{id}`
 
 ---
 
@@ -150,8 +181,21 @@ A API estará disponível em:
 ```
 http://localhost:8080
 
-http://localhost:8080/swagger-ui/index.html#/
 ```
+## 📘 Documentação da API (Swagger)
+
+A API possui documentação interativa via Swagger/OpenAPI.
+
+Após iniciar a aplicação, acesse:
+http://localhost:8080/swagger-ui/index.html
+
+Para acessar endpoints protegidos:
+1. Faça login em `/api/auth/login`
+2. Copie o token JWT retornado
+3. Clique em **Authorize** no Swagger
+4. Cole o token no formato: `Bearer <token>`
+
+---
 
 ## 📄 Licença
 
