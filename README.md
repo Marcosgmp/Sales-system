@@ -17,6 +17,7 @@ Projeto criado com foco em **boas práticas**, **arquitetura em camadas** e **or
 - BCrypt Password Encoder
 - PostgreSQL / MySQL
 - Maven
+- Swagger
 
 ---
 
@@ -138,7 +139,7 @@ Edite o arquivo `application.properties` e defina as variáveis de ambiente:
 git clone https://github.com/seu-usuario/seu-repositorio.git
 
 # Entrar no projeto
-cd sales-system
+cd sales-system-API
 
 # Rodar a aplicação
 mvn spring-boot:run
@@ -148,6 +149,8 @@ A API estará disponível em:
 
 ```
 http://localhost:8080
+
+http://localhost:8080/swagger-ui/index.html#/
 ```
 
 ## 📄 Licença
